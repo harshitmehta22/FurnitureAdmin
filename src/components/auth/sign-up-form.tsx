@@ -21,10 +21,10 @@ import { z as zod } from 'zod';
 import { paths } from '@/paths';
 import { authClient } from '@/lib/auth/client';
 import { useUser } from '@/hooks/use-user';
+import axios from 'axios';
 
 const schema = zod.object({
-  firstName: zod.string().min(1, { message: 'First name is required' }),
-  lastName: zod.string().min(1, { message: 'Last name is required' }),
+  username: zod.string().min(1, { message: 'Username is required' }),
   email: zod.string().min(1, { message: 'Email is required' }).email(),
   password: zod.string().min(6, { message: 'Password should be at least 6 characters' }),
   terms: zod.boolean().refine((value) => value, 'You must accept the terms and conditions'),
@@ -32,13 +32,11 @@ const schema = zod.object({
 
 type Values = zod.infer<typeof schema>;
 
-const defaultValues = { firstName: '', lastName: '', email: '', password: '', terms: false } satisfies Values;
+const defaultValues = { username: '', email: '', password: '', terms: false } satisfies Values;
 
 export function SignUpForm(): React.JSX.Element {
   const router = useRouter();
-
   const { checkSession } = useUser();
-
   const [isPending, setIsPending] = React.useState<boolean>(false);
 
   const {
@@ -46,28 +44,44 @@ export function SignUpForm(): React.JSX.Element {
     handleSubmit,
     setError,
     formState: { errors },
+    reset
   } = useForm<Values>({ defaultValues, resolver: zodResolver(schema) });
+
+  // API call for signup
+  const signUpApi = async (values: Values) => {
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/signup', values);
+
+      if (response.status === 200) {
+      router.push(paths.auth.signIn);
+        return null; // Success, no errors
+      }
+
+      return response.data?.message || 'An error occurred. Please try again.';
+    } catch (error) {
+      console.error('Signup API error:', error);
+      return 'Server error. Please try again later.';
+    }
+  };
 
   const onSubmit = React.useCallback(
     async (values: Values): Promise<void> => {
       setIsPending(true);
 
-      const { error } = await authClient.signUp(values);
+      // Call the API
+      const dataWithRole = { ...values, role: 'Admin' };
+      const apiError = await signUpApi(dataWithRole);
 
-      if (error) {
-        setError('root', { type: 'server', message: error });
+      if (apiError) {
+        setError('root', { type: 'server', message: apiError });
         setIsPending(false);
         return;
       }
-
-      // Refresh the auth state
+      // Refresh the auth state and handle successful signup
       await checkSession?.();
-
-      // UserProvider, for this case, will not refresh the router
-      // After refresh, GuestGuard will handle the redirect
-      router.refresh();
+      router.refresh(); // Trigger the router refresh
     },
-    [checkSession, router, setError]
+    [checkSession, router, setError, reset]
   );
 
   return (
@@ -85,23 +99,12 @@ export function SignUpForm(): React.JSX.Element {
         <Stack spacing={2}>
           <Controller
             control={control}
-            name="firstName"
+            name="username"
             render={({ field }) => (
-              <FormControl error={Boolean(errors.firstName)}>
-                <InputLabel>First name</InputLabel>
-                <OutlinedInput {...field} label="First name" />
-                {errors.firstName ? <FormHelperText>{errors.firstName.message}</FormHelperText> : null}
-              </FormControl>
-            )}
-          />
-          <Controller
-            control={control}
-            name="lastName"
-            render={({ field }) => (
-              <FormControl error={Boolean(errors.firstName)}>
-                <InputLabel>Last name</InputLabel>
-                <OutlinedInput {...field} label="Last name" />
-                {errors.firstName ? <FormHelperText>{errors.firstName.message}</FormHelperText> : null}
+              <FormControl error={Boolean(errors.username)}>
+                <InputLabel>Username</InputLabel>
+                <OutlinedInput {...field} label="User name" />
+                {errors.username ? <FormHelperText>{errors.username.message}</FormHelperText> : null}
               </FormControl>
             )}
           />

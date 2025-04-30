@@ -50,7 +50,7 @@ export function DynamicLogo({
 
   return (
     <NoSsr fallback={<Box sx={{ height: `${height}px`, width: `${width}px` }} />}>
-      <Logo color={color} height={height} width={width} {...props} />
+      {/* <Logo color={color} height={height} width={width} {...props} /> */}
     </NoSsr>
   );
 }
