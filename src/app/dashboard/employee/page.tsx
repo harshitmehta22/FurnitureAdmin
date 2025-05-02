@@ -6,23 +6,36 @@ import Typography from '@mui/material/Typography';
 import { Download as DownloadIcon } from '@phosphor-icons/react/dist/ssr/Download';
 import { Plus as PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus';
 import { Upload as UploadIcon } from '@phosphor-icons/react/dist/ssr/Upload';
-import { CustomersTable } from '@/components/dashboard/customer/customers-table';
-import type { Product } from '@/components/dashboard/customer/customers-table';
+import { CustomersFilters } from '@/components/dashboard/customer/customers-filters';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import AddProductDialog from '@/components/addProductDialog';
+import { ToastContainer, toast } from 'react-toastify';
+import { Employee, EmployeeTable } from '@/components/employeeTable/employee-table';
+import AddEmployeeDialog from '@/components/addEmployeeDialog';
 
 export default function Page(): React.JSX.Element {
     const page = 0;
     const rowsPerPage = 5;
-    const [products, setProducts] = useState([])
+    const [category, setCategory] = useState([])
     const fetchCustomers = async () => {
+        const toastId = 'fetch-category-success'; // Unique toast ID
+        const errtoastId = 'fetch-category-error'; // Unique toast ID for error
         try {
-            const res = await axios(' http://localhost:5000/api/getproduct');
-            console.log(res, "repsonse/")
-            setProducts(res.data.product);
-        } catch (err) {
-            console.error('Failed to fetch customers:', err);
+            const res = await axios.get('http://localhost:5000/api/allemployee');
+            console.log(res, "res")
+            setCategory(res.data.employees);
+            console.log(category, "category")
+            const message = res.data?.message || "Categories fetched successfully";
+            if (!toast.isActive(toastId)) {
+                toast.success(message, { toastId });
+            }
+
+        } catch (err: any) {
+            console.error('Failed to fetch category:', err);
+            const errorMessage = err?.response?.data?.message || "Failed to fetch categories";
+            if (!toast.isActive(errtoastId)) {
+                toast.error(errorMessage, { toastId: errtoastId });
+            }
         }
     };
     useEffect(() => {
@@ -37,15 +50,28 @@ export default function Page(): React.JSX.Element {
     const handleCloseDialog = () => {
         setOpenAddDialog(false);
     };
+    console.log(category, "category")
 
 
-    const paginatedCustomers = applyPagination(products, page, rowsPerPage);
+    const paginatedCustomers = applyPagination(category, page, rowsPerPage);
 
     return (
         <Stack spacing={3}>
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+            />
             <Stack direction="row" spacing={3}>
                 <Stack spacing={1} sx={{ flex: '1 1 auto' }}>
-                    <Typography variant="h4">Products</Typography>
+                    <Typography variant="h4">Employee</Typography>
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <Button color="inherit" startIcon={<UploadIcon fontSize="var(--icon-fontSize-md)" />}>
                             Import
@@ -61,14 +87,15 @@ export default function Page(): React.JSX.Element {
                     </Button>
                 </div>
             </Stack>
-            <CustomersTable
+            <CustomersFilters />
+            <EmployeeTable
                 count={paginatedCustomers.length}
                 page={page}
                 onProductUpdate={fetchCustomers}
                 rows={paginatedCustomers}
                 rowsPerPage={rowsPerPage}
             />
-            <AddProductDialog
+            <AddEmployeeDialog
                 open={openAddDialog}
                 onClose={handleCloseDialog}
                 onProductAdded={fetchCustomers}
@@ -77,7 +104,7 @@ export default function Page(): React.JSX.Element {
     );
 }
 
-function applyPagination(rows: Product[], page: number, rowsPerPage: number): Product[] {
+function applyPagination(rows: Employee[], page: number, rowsPerPage: number): Employee[] {
     if (!Array.isArray(rows)) return [];
     return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 }

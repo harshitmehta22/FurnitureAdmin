@@ -1,5 +1,4 @@
 'use client';
-
 import * as React from 'react';
 import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
@@ -16,11 +15,29 @@ import { usePopover } from '@/hooks/use-popover';
 
 import { MobileNav } from './mobile-nav';
 import { UserPopover } from './user-popover';
+import { io } from 'socket.io-client';
+import { Menu, MenuItem } from '@mui/material';
 
 export function MainNav(): React.JSX.Element {
   const [openNav, setOpenNav] = React.useState<boolean>(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [notifications, setNotifications] = React.useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = React.useState<number>(0);
 
   const userPopover = usePopover<HTMLDivElement>();
+  const socket = io('http://localhost:5000', {
+    transports: ['websocket'], // optional, forces WebSocket
+  });
+  React.useEffect(() => {
+    socket.on('admin-notification', (notification: any) => {
+      setNotifications((prevNotifications) => [notification, ...prevNotifications]);
+      setUnreadCount((prevCount) => prevCount + 1);
+    });
+
+    return () => {
+      socket.off('admin-notification');
+    };
+  }, []);
 
   return (
     <React.Fragment>
@@ -61,10 +78,10 @@ export function MainNav(): React.JSX.Element {
               </IconButton>
             </Tooltip>
             <Tooltip title="Notifications">
-              <Badge badgeContent={4} color="success" variant="dot">
-                <IconButton>
-                  <BellIcon />
-                </IconButton>
+              <Badge badgeContent={unreadCount} color="error">
+                {/* <IconButton onClick={handleOpenNotifications}> */}
+                <BellIcon />
+                {/* </IconButton> */}
               </Badge>
             </Tooltip>
             <Avatar
@@ -76,6 +93,21 @@ export function MainNav(): React.JSX.Element {
           </Stack>
         </Stack>
       </Box>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+      // onClose={handleCloseNotifications}
+      >
+        {notifications.length === 0 ? (
+          <MenuItem disabled>No notifications</MenuItem>
+        ) : (
+          notifications.map((notif: any) => (
+            <MenuItem key={notif._id}>
+              {notif.message}
+            </MenuItem>
+          ))
+        )}
+      </Menu>
       <UserPopover anchorEl={userPopover.anchorRef.current} onClose={userPopover.handleClose} open={userPopover.open} />
       <MobileNav
         onClose={() => {
