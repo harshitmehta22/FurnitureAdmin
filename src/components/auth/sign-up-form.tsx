@@ -17,7 +17,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { Controller, useForm } from 'react-hook-form';
 import { z as zod } from 'zod';
-
+import { io } from 'socket.io-client';
 import { paths } from '@/paths';
 import { authClient } from '@/lib/auth/client';
 import { useUser } from '@/hooks/use-user';
@@ -38,6 +38,7 @@ export function SignUpForm(): React.JSX.Element {
   const router = useRouter();
   const { checkSession } = useUser();
   const [isPending, setIsPending] = React.useState<boolean>(false);
+
 
   const {
     control,
@@ -77,7 +78,6 @@ export function SignUpForm(): React.JSX.Element {
         setIsPending(false);
         return;
       }
-      // Refresh the auth state and handle successful signup
       await checkSession?.();
       router.refresh(); // Trigger the router refresh
     },

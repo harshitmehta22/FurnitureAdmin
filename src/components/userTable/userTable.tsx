@@ -62,7 +62,7 @@ export function UserTable({
     const [editData, setEditData] = React.useState<User | null>(null);
     const handleDelete = async (id: string) => {
         try {
-            await axios.delete(`http://localhost:5000/api/delete-product/${id}`);
+            await axios.delete(`http://localhost:5000/api/auth/deleteuser/${id}`);
             if (onProductUpdate) {
                 const deletedProduct = rows.find((row) => row._id === id);
                 if (deletedProduct) {

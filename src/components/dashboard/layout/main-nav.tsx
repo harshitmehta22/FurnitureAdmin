@@ -15,32 +15,55 @@ import { usePopover } from '@/hooks/use-popover';
 
 import { MobileNav } from './mobile-nav';
 import { UserPopover } from './user-popover';
-import { io } from 'socket.io-client';
 import { Menu, MenuItem } from '@mui/material';
+import { toast, ToastContainer } from 'react-toastify';
+import { io, Socket } from 'socket.io-client';
 
+let socket: Socket;
 export function MainNav(): React.JSX.Element {
   const [openNav, setOpenNav] = React.useState<boolean>(false);
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [notifications, setNotifications] = React.useState<any[]>([]);
-  const [unreadCount, setUnreadCount] = React.useState<number>(0);
-
+  const [unreadCount, setUnreadCount] = React.useState(0);
+  const [showNotifications, setShowNotifications] = React.useState(false); // 🔔 NEW
   const userPopover = usePopover<HTMLDivElement>();
-  const socket = io('http://localhost:5000', {
-    transports: ['websocket'], // optional, forces WebSocket
-  });
   React.useEffect(() => {
-    socket.on('admin-notification', (notification: any) => {
-      setNotifications((prevNotifications) => [notification, ...prevNotifications]);
-      setUnreadCount((prevCount) => prevCount + 1);
+    socket = io('http://localhost:5000', {
+      transports: ['websocket'],
+      withCredentials: true,
+    });
+
+    // Listen for notifications
+    socket.on('receiveNotification', (data) => {
+      console.log("📥 Notification received:", data);
+      setNotifications(prev => [data, ...prev]);
+      setUnreadCount(prev => prev + 1);
+      toast.info(`🛎️ ${data.username} just signed up!`);
     });
 
     return () => {
-      socket.off('admin-notification');
+      socket?.disconnect();
     };
   }, []);
 
+  const handleNotificationClick = () => {
+    setShowNotifications((prev) => !prev);   // Toggle the list
+    setUnreadCount(0);                       // Mark as read
+  };
+
   return (
     <React.Fragment>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <Box
         component="header"
         sx={{
@@ -79,9 +102,9 @@ export function MainNav(): React.JSX.Element {
             </Tooltip>
             <Tooltip title="Notifications">
               <Badge badgeContent={unreadCount} color="error">
-                {/* <IconButton onClick={handleOpenNotifications}> */}
+                <IconButton onClick={handleNotificationClick}>
                 <BellIcon />
-                {/* </IconButton> */}
+                </IconButton>
               </Badge>
             </Tooltip>
             <Avatar
@@ -93,21 +116,21 @@ export function MainNav(): React.JSX.Element {
           </Stack>
         </Stack>
       </Box>
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-      // onClose={handleCloseNotifications}
-      >
-        {notifications.length === 0 ? (
-          <MenuItem disabled>No notifications</MenuItem>
-        ) : (
-          notifications.map((notif: any) => (
-            <MenuItem key={notif._id}>
-              {notif.message}
-            </MenuItem>
-          ))
-        )}
-      </Menu>
+      {showNotifications && (
+        <Box sx={{ px: 2, py: 1 }}>
+          {notifications.length === 0 ? (
+            <p>No new notifications.</p>
+          ) : (
+            <ul>
+              {notifications.map((n, index) => (
+                <li key={index}>
+                  <strong>{n.username}</strong> ({n.email}) just registered. Role: {n.role}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Box>
+      )}
       <UserPopover anchorEl={userPopover.anchorRef.current} onClose={userPopover.handleClose} open={userPopover.open} />
       <MobileNav
         onClose={() => {
