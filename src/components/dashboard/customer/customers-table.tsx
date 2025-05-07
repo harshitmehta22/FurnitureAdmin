@@ -27,6 +27,7 @@ function noop(): void {
 }
 
 export interface Product {
+  updatedAt: string | number | Date | null | undefined;
   _id: string;
   avatar: string;
   name: string;

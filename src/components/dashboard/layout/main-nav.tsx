@@ -31,8 +31,6 @@ export function MainNav(): React.JSX.Element {
       transports: ['websocket'],
       withCredentials: true,
     });
-
-    // Listen for notifications
     socket.on('receiveNotification', (data) => {
       console.log("📥 Notification received:", data);
       setNotifications(prev => [data, ...prev]);
@@ -103,7 +101,7 @@ export function MainNav(): React.JSX.Element {
             <Tooltip title="Notifications">
               <Badge badgeContent={unreadCount} color="error">
                 <IconButton onClick={handleNotificationClick}>
-                <BellIcon />
+                  <BellIcon />
                 </IconButton>
               </Badge>
             </Tooltip>

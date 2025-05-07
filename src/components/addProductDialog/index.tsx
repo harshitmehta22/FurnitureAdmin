@@ -2,7 +2,11 @@
 import React, { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, TextField, Stack
+  Button, TextField, Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import axios from 'axios';
 
@@ -23,6 +27,7 @@ export default function AddProductDialog({ open, onClose, onProductAdded }: Prop
     image: null as File | null,
     price: '',
   });
+  const [category, setCategory] = useState([])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -34,7 +39,14 @@ export default function AddProductDialog({ open, onClose, onProductAdded }: Prop
       setFormData(prev => ({ ...prev, image: file }));
     }
   };
+  const getCategory = async () => {
+    const response = await axios.get('http://localhost:5000/api/getcategory');
+    setCategory(response.data.categories);
+  }
 
+  React.useEffect(() => {
+    getCategory()
+  }, [])
   const handleSubmit = async () => {
     const data = new FormData();
     data.append('name', formData.name);
@@ -67,7 +79,26 @@ export default function AddProductDialog({ open, onClose, onProductAdded }: Prop
           <TextField label="Material" name="material" value={formData.material} onChange={handleChange} fullWidth />
           <TextField label="Brand" name="brand" value={formData.brand} onChange={handleChange} fullWidth />
           <TextField label="Size" name="size" value={formData.size} onChange={handleChange} fullWidth />
-          <TextField label="Category" name="category" value={formData.category} onChange={handleChange} fullWidth />
+          <FormControl fullWidth>
+            <InputLabel id="category-label">Category</InputLabel>
+            <Select
+              labelId="category-label"
+              id="category"
+              name="category"
+              value={formData.category}
+              label="Category"
+              onChange={(e) =>
+                setFormData(prev => ({ ...prev, category: e.target.value }))
+              }
+            >
+              {category.map((cat: any) => (
+                <MenuItem key={cat._id} value={cat.name}>
+                  {cat.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <TextField label="Color" name="color" value={formData.color} onChange={handleChange} fullWidth />
 
           <Button variant="outlined" component="label">
