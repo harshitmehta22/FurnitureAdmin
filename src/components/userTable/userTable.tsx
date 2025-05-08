@@ -40,6 +40,8 @@ interface CustomersTableProps {
     page?: number;
     rows?: User[];
     rowsPerPage?: number;
+    onPageChange?: (event: unknown, newPage: number) => void;
+    onRowsPerPageChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onProductUpdate?: (product: User) => void;
 }
 
@@ -48,6 +50,8 @@ export function UserTable({
     rows = [],
     page = 0,
     rowsPerPage = 0,
+    onPageChange,
+    onRowsPerPageChange,
     onProductUpdate
 }: CustomersTableProps): React.JSX.Element {
     const rowIds = React.useMemo(() => {

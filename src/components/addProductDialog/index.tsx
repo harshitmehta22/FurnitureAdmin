@@ -1,12 +1,13 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Stack,
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Typography
 } from '@mui/material';
 import axios from 'axios';
 
@@ -22,12 +23,14 @@ export default function AddProductDialog({ open, onClose, onProductAdded }: Prop
     brand: '',
     material: '',
     color: '',
+    stock: '',
     size: '',
     category: '',
     image: null as File | null,
     price: '',
   });
-  const [category, setCategory] = useState([])
+
+  const [category, setCategory] = useState([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -39,19 +42,22 @@ export default function AddProductDialog({ open, onClose, onProductAdded }: Prop
       setFormData(prev => ({ ...prev, image: file }));
     }
   };
+
   const getCategory = async () => {
     const response = await axios.get('http://localhost:5000/api/getcategory');
     setCategory(response.data.categories);
-  }
+  };
 
-  React.useEffect(() => {
-    getCategory()
-  }, [])
+  useEffect(() => {
+    getCategory();
+  }, []);
+
   const handleSubmit = async () => {
     const data = new FormData();
     data.append('name', formData.name);
     data.append('price', formData.price);
     data.append('brand', formData.brand);
+    data.append('stock', formData.stock);
     data.append('material', formData.material);
     data.append('size', formData.size);
     data.append('category', formData.category);
@@ -63,11 +69,25 @@ export default function AddProductDialog({ open, onClose, onProductAdded }: Prop
     try {
       await axios.post('http://localhost:5000/api/addproduct', data);
       onProductAdded();
+      setFormData({
+        name: '',
+        brand: '',
+        material: '',
+        color: '',
+        stock: '',
+        size: '',
+        category: '',
+        image: null,
+        price: '',
+      });
       onClose();
     } catch (err) {
       console.error('Error adding product:', err);
     }
   };
+
+  // Automatically derive availability from stock
+  const isAvailable = Number(formData.stock) > 0;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -99,7 +119,26 @@ export default function AddProductDialog({ open, onClose, onProductAdded }: Prop
             </Select>
           </FormControl>
 
-          <TextField label="Color" name="color" value={formData.color} onChange={handleChange} fullWidth />
+          <TextField
+            label="Color"
+            name="color"
+            value={formData.color}
+            onChange={handleChange}
+            fullWidth
+          />
+
+          <TextField
+            label="Stock"
+            name="stock"
+            type="number"
+            value={formData.stock}
+            onChange={handleChange}
+            fullWidth
+          />
+
+          <Typography variant="subtitle2" color={isAvailable ? 'green' : 'red'}>
+            Status: {isAvailable ? 'In Stock' : 'Out of Stock'}
+          </Typography>
 
           <Button variant="outlined" component="label">
             Upload Image

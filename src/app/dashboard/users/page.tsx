@@ -11,8 +11,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import { User, UserTable } from '@/components/userTable/userTable';
 
 export default function Page(): React.JSX.Element {
-  const page = 0;
-  const rowsPerPage = 5;
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [users, setUsers] = React.useState([])
   const fetchUsers = async () => {
     const toastId = 'fetch-users-success'; // Unique toast ID

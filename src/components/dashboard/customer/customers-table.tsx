@@ -34,6 +34,8 @@ export interface Product {
   brand: string;
   material: string;
   image: string;
+  stock: number;
+  available: boolean;
   size: number;
   price: number;
   category: string;
@@ -148,6 +150,8 @@ export function CustomersTable({
                 <TableCell>Size</TableCell>
                 <TableCell>Material</TableCell>
                 <TableCell>Price</TableCell>
+                <TableCell>Stock</TableCell>
+                <TableCell>Available</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Action</TableCell>
 
@@ -191,6 +195,11 @@ export function CustomersTable({
                       <TableCell>{row.size}</TableCell>
                       <TableCell>{row.material}</TableCell>
                       <TableCell>{row.price}</TableCell>
+                      <TableCell>{row.stock}</TableCell>
+                      <TableCell> <Typography color={row.available ? 'green' : 'red'}>
+                        {row.available ? 'InStock' : 'OutStock'}
+                      </Typography></TableCell>
+
 
                       <TableCell>{dayjs(row.createdAt).format('MMM D, YYYY')}</TableCell>
                       <TableCell> <Stack direction="row" spacing={1}>
